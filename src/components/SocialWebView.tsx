@@ -37,6 +37,10 @@ export default function SocialWebView(props: SocialWebViewProps) {
   const shouldStart: WebViewProps['onShouldStartLoadWithRequest'] = (request) => {
     // Always allow initial load
     if (request.url === 'about:blank') return true;
+    // Suppress specific noisy background URL that opens externally
+    if (request.url.startsWith('https://www.facebook.com/instagram/login_sync/')) {
+      return false;
+    }
     const allowed = isHostAllowed(request.url, allowedHosts);
     if (!allowed) {
       Linking.openURL(request.url).catch(() => {});
@@ -56,6 +60,8 @@ export default function SocialWebView(props: SocialWebViewProps) {
       domStorageEnabled
       setSupportMultipleWindows={Platform.OS === 'android' ? true : undefined}
       onShouldStartLoadWithRequest={shouldStart}
+      allowsInlineMediaPlayback
+      allowsFullscreenVideo={false}
       injectedJavaScriptBeforeContentLoaded={injectionBefore}
       injectedJavaScript={injectionAfter}
       onNavigationStateChange={onNavigationStateChange}

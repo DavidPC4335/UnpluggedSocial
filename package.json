@@ -6,7 +6,8 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "build:injections": "node scripts/build-injections.js"
   },
   "dependencies": {
     "@react-navigation/native": "^7.1.26",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
+    "esbuild": "^0.24.2",
     "typescript": "~5.9.2"
   },
   "private": true
