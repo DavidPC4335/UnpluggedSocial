@@ -5,7 +5,7 @@ import { WebView } from 'react-native-webview';
 import SocialWebView from '../src/components/SocialWebView';
 import Toolbar from '../src/ui/Toolbar';
 import { sites, resolveUserAgentFor, SiteKey } from '../src/config/sites';
-import * as Shake from 'expo-shake';
+import { Accelerometer } from 'expo-sensors';
 
 type RootStackParamList = {
   Home: undefined;
@@ -30,10 +30,26 @@ export default function BrowserScreen({ route, navigation }: Props) {
   };
 
   React.useEffect(() => {
-    const subscription = Shake.addListener(() => {
-      setToolbarVisible(true);
+    // Simple shake detection using Accelerometer magnitude
+    let lastTrigger = 0;
+    const debounceMs = 1000;
+    const thresholdG = 1.6; // tweak as desired for sensitivity
+
+    Accelerometer.setUpdateInterval(100);
+    const subscription = Accelerometer.addListener(({ x, y, z }) => {
+      const magnitude = Math.sqrt(x * x + y * y + z * z);
+      if (magnitude > thresholdG) {
+        const now = Date.now();
+        if (now - lastTrigger > debounceMs) {
+          lastTrigger = now;
+          setToolbarVisible(true);
+        }
+      }
     });
-    return () => subscription.remove();
+
+    return () => {
+      subscription.remove();
+    };
   }, []);
 
   const closeToolbar = () => setToolbarVisible(false);
