@@ -1,11 +1,12 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { Modal, Platform, Pressable, SafeAreaView, StyleSheet, View } from 'react-native';
+import { Modal, Platform, Pressable, SafeAreaView, StyleSheet, View, Text } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { WebView } from 'react-native-webview';
 import SocialWebView from '../src/components/SocialWebView';
 import Toolbar from '../src/ui/Toolbar';
 import { sites, resolveUserAgentFor, SiteKey } from '../src/config/sites';
 import { Accelerometer } from 'expo-sensors';
+import { useTheme } from '../src/contexts/ThemeContext';
 
 type RootStackParamList = {
   Home: undefined;
@@ -18,6 +19,7 @@ export default function BrowserScreen({ route, navigation }: Props) {
   const { site } = route.params;
   const config = sites[site];
   const userAgent = resolveUserAgentFor(config);
+  const { theme } = useTheme();
 
   const webviewRef = useRef<WebView>(null);
   const [canGoBack, setCanGoBack] = useState(false);
@@ -82,6 +84,7 @@ export default function BrowserScreen({ route, navigation }: Props) {
           injectionAfter={config.injectionAfter}
           onNavigationStateChange={onNavChange}
           webviewRef={webviewRef}
+          theme={theme}
         />
       </View>
       <Modal
@@ -91,7 +94,7 @@ export default function BrowserScreen({ route, navigation }: Props) {
         onRequestClose={closeToolbar}
       >
         <Pressable style={styles.modalBackdrop} onPress={closeToolbar}>
-          <Pressable style={styles.modalCard}>
+          <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
             <Toolbar
               canGoBack={canGoBack}
               canGoForward={canGoForward}
@@ -100,6 +103,9 @@ export default function BrowserScreen({ route, navigation }: Props) {
               onReload={onReload}
               onHome={onHome}
             />
+            <View style={styles.closeHint}>
+              <Text style={styles.closeHintText}>Press anywhere to close</Text>
+            </View>
           </Pressable>
         </Pressable>
       </Modal>
@@ -121,5 +127,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: '#fff',
+  },
+  closeHint: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#e5e5e5',
+  },
+  closeHintText: {
+    fontSize: 13,
+    color: '#666666',
+    fontFamily: '-apple-system, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
   },
 });
