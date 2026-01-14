@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Pressable, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../contexts/ThemeContext';
+import { getPalette, themeConfig } from '../config/theme';
 
 export interface ToolbarProps {
   canGoBack: boolean;
@@ -8,52 +11,114 @@ export interface ToolbarProps {
   onForward: () => void;
   onReload: () => void;
   onHome: () => void;
+  onOpenConsole?: () => void;
+  showConsoleButton?: boolean;
 }
 
 export default function Toolbar(props: ToolbarProps) {
-  const { canGoBack, canGoForward, onBack, onForward, onReload, onHome } = props;
+  const { canGoBack, canGoForward, onBack, onForward, onReload, onHome, onOpenConsole, showConsoleButton } = props;
+  const { theme } = useTheme();
+  const palette = getPalette(theme);
+
+  const dynamic = useMemo(() => {
+    return {
+      container: {
+        backgroundColor: palette.surface,
+        borderTopColor: palette.border,
+      },
+      button: {
+        backgroundColor: theme === 'dark' ? '#1b1b1b' : '#f8f9fa',
+        borderColor: palette.border,
+      },
+      buttonPressed: {
+        backgroundColor: theme === 'dark' ? '#202020' : '#eceff3',
+      },
+      buttonDisabled: {
+        backgroundColor: theme === 'dark' ? '#191919' : '#f5f5f5',
+        borderColor: palette.border,
+      },
+      icon: {
+        color: palette.text,
+      },
+      iconDisabled: {
+        color: palette.textMuted,
+      },
+      label: {
+        color: palette.text,
+      },
+    };
+  }, [palette, theme]);
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, dynamic.container]}>
       <Pressable 
         style={({ pressed }) => [
           styles.button,
+          dynamic.button,
           pressed && styles.buttonPressed
         ]}
         onPress={onHome}
       >
-        <Text style={styles.icon}>⌂</Text>
+        <View style={styles.iconWrap}>
+          <Ionicons name="home-outline" size={22} style={[styles.icon, dynamic.icon]} />
+        </View>
       </Pressable>
       <Pressable 
         style={({ pressed }) => [
           styles.button,
+          dynamic.button,
           !canGoBack && styles.buttonDisabled,
+          !canGoBack && dynamic.buttonDisabled,
           pressed && styles.buttonPressed
         ]}
         onPress={onBack}
         disabled={!canGoBack}
       >
-        <Text style={[styles.icon, !canGoBack && styles.iconDisabled]}>◀</Text>
+        <View style={styles.iconWrap}>
+          <Ionicons name="chevron-back" size={22} style={[styles.icon, dynamic.icon, !canGoBack && styles.iconDisabled, !canGoBack && dynamic.iconDisabled]} />
+        </View>
       </Pressable>
       <Pressable 
         style={({ pressed }) => [
           styles.button,
+          dynamic.button,
           !canGoForward && styles.buttonDisabled,
+          !canGoForward && dynamic.buttonDisabled,
           pressed && styles.buttonPressed
         ]}
         onPress={onForward}
         disabled={!canGoForward}
       >
-        <Text style={[styles.icon, !canGoForward && styles.iconDisabled]}>▶</Text>
+        <View style={styles.iconWrap}>
+          <Ionicons name="chevron-forward" size={22} style={[styles.icon, dynamic.icon, !canGoForward && styles.iconDisabled, !canGoForward && dynamic.iconDisabled]} />
+        </View>
       </Pressable>
       <Pressable 
         style={({ pressed }) => [
           styles.button,
+          dynamic.button,
           pressed && styles.buttonPressed
         ]}
         onPress={onReload}
       >
-        <Text style={styles.icon}>↻</Text>
+        <View style={styles.iconWrap}>
+          <Ionicons name="reload" size={21} style={[styles.icon, dynamic.icon]} />
+        </View>
       </Pressable>
+      {showConsoleButton ? (
+        <Pressable 
+          style={({ pressed }) => [
+            styles.button,
+            dynamic.button,
+            pressed && styles.buttonPressed
+          ]}
+          onPress={onOpenConsole}
+        >
+          <View style={styles.iconWrap}>
+            <Ionicons name="terminal-outline" size={21} style={[styles.icon, dynamic.icon]} />
+          </View>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -63,21 +128,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 16,
     gap: 12,
-    backgroundColor: '#ffffff',
     borderTopWidth: 1,
-    borderTopColor: '#e5e5e5',
   },
   button: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
     paddingVertical: 14,
     paddingHorizontal: 16,
-    borderRadius: 8,
+    borderRadius: themeConfig.shape.radiusSm,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 52,
+    minHeight: 56,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -88,21 +149,22 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   buttonPressed: {
-    backgroundColor: '#e9ecef',
     transform: [{ scale: 0.98 }],
   },
   buttonDisabled: {
-    backgroundColor: '#f5f5f5',
-    borderColor: '#e8e8e8',
     opacity: 0.6,
   },
+  iconWrap: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   icon: {
-    fontSize: 24,
-    color: '#1a1a1a',
-    fontWeight: '400',
+    fontSize: 20,
+    lineHeight: 22,
   },
   iconDisabled: {
-    color: '#999999',
   },
 });
 

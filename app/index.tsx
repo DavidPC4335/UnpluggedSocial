@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
-import { SafeAreaView, View, StyleSheet, Text, TouchableOpacity, Platform, Modal, Pressable, Switch } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { SafeAreaView, View, StyleSheet, Text, TouchableOpacity, Platform, Modal, Pressable, Switch, useWindowDimensions } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { SiteKey } from '../src/config/sites';
 import { useTheme } from '../src/contexts/ThemeContext';
+import { landingConfig } from '../src/config/landing';
+import { getPalette, themeConfig } from '../src/config/theme';
+import { Ionicons, Feather } from '@expo/vector-icons';
 
 type RootStackParamList = {
   Home: undefined;
@@ -12,40 +15,131 @@ type RootStackParamList = {
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 export default function HomeScreen({ navigation }: Props) {
+	const { height, width } = useWindowDimensions();
 	const { theme, toggleTheme } = useTheme();
 	const [settingsVisible, setSettingsVisible] = useState(false);
 	const open = (site: SiteKey) => navigation.navigate('Browser', { site });
 
+	const palette = getPalette(theme);
 	const isDark = theme === 'dark';
-	const dynamicStyles = getDynamicStyles(isDark);
+
+	// Responsive type scaling
+	const baseScale = useMemo(() => {
+		if (width >= 720) return 1.15;
+		if (width >= 400) return 1.0;
+		return 0.92;
+	}, [width]);
 
   return (
-		<SafeAreaView style={[styles.safe, dynamicStyles.safe]}>
+		<SafeAreaView style={[styles.safe, { backgroundColor: palette.background }]}>
+			<View style={styles.decor}>
+				<View style={[styles.glow, { backgroundColor: palette.glowPrimary, right: -60, top: -40 }]} />
+				<View style={[styles.glow, { backgroundColor: palette.glowAccent, left: -80, bottom: height * 0.28 }]} />
+			</View>
+
 			<View style={styles.container}>
 				<View style={styles.header}>
-					<Text style={[styles.brand, dynamicStyles.brand]}>Unplugged Socials</Text>
-					<TouchableOpacity 
-						style={styles.settingsButton} 
+					<View style={styles.brandRow}>
+					
+						<Text
+							style={[
+								styles.brand,
+								{
+									color: palette.text,
+									fontSize: themeConfig.typography.display * baseScale,
+								},
+							]}
+						>
+							{landingConfig.title}
+						</Text>
+					</View>
+
+					<TouchableOpacity
+						style={styles.settingsButton}
 						onPress={() => setSettingsVisible(true)}
-						activeOpacity={0.7}
+						activeOpacity={0.8}
 					>
-						<Text style={[styles.settingsIcon, dynamicStyles.settingsIcon]}>⚙️</Text>
+						<Ionicons name="settings-outline" size={22} color={palette.text} />
 					</TouchableOpacity>
 				</View>
 
-				<Text style={[styles.tagline, dynamicStyles.tagline]}>
-					Keep your <Text style={styles.taglineAccent}>social media</Text> about being social.
+				<Text
+					style={[
+						styles.tagline,
+						{
+							color: palette.textMuted,
+							fontSize: themeConfig.typography.subtitle * baseScale,
+						},
+					]}
+				>
+					{landingConfig.subtitlePrefix}
+					<Text style={{ color: palette.accent, fontWeight: '700' }}>{landingConfig.subtitleAccent}</Text>
+					{landingConfig.subtitleSuffix}
 				</Text>
 
-				<TouchableOpacity style={styles.ctaButton} activeOpacity={0.9} onPress={() => open('instagram')}>
-					<Text style={styles.ctaLabel}>Open Instagram</Text>
-				</TouchableOpacity>
-				{/* <TouchableOpacity style={styles.ctaButton} activeOpacity={0.9} onPress={() => open('instagram')}>
-					<Text style={styles.ctaLabel}>Open Facebook</Text>
-				</TouchableOpacity>
-          <TouchableOpacity style={styles.ctaButton} activeOpacity={0.9} onPress={() => open('instagram')}>
-            <Text style={styles.ctaLabel}>Open TikTok</Text>
-          </TouchableOpacity> */}
+				<View style={styles.buttons}>
+					{landingConfig.ctas.map((cta) => (
+						<TouchableOpacity
+							key={cta.label}
+							style={[
+								styles.ctaButton,
+								{
+									backgroundColor: cta.primary ? palette.primary : (isDark ? '#1c1c1c' : '#f5f5f5'),
+									borderColor: cta.primary ? palette.primary : palette.border,
+									width: Math.min(320, Math.max(240, width * 0.7)),
+								},
+							]}
+							activeOpacity={0.93}
+							onPress={() => open(cta.site)}
+						>
+							<Ionicons
+								name={cta.icon as any}
+								size={18}
+								color={cta.primary ? palette.primaryTextOn : (isDark ? '#ffffff' : '#111111')}
+								style={{ marginRight: 10 }}
+							/>
+							<Text
+								style={[
+									styles.ctaLabel,
+									{
+										color: cta.primary ? palette.primaryTextOn : (isDark ? '#ffffff' : '#111111'),
+										fontSize: themeConfig.typography.button * baseScale,
+									},
+								]}
+							>
+								{cta.label}
+							</Text>
+						</TouchableOpacity>
+					))}
+				</View>
+
+			
+
+				{landingConfig.info?.length ? (
+					<View style={[styles.info, { borderColor: palette.border, backgroundColor: theme === 'dark' ? '#121212' : '#fafafa' }]}>
+						{landingConfig.info.map((i) => (
+							<View key={i.text} style={styles.infoItem}>
+								<Ionicons name={i.icon as any} size={18} color={palette.textMuted} style={{ marginRight: 8 }} />
+								<Text style={[styles.infoText, { color: palette.textMuted }]}>{i.text}</Text>
+							</View>
+						))}
+					</View>
+				) : null}
+	{landingConfig.showFeatureList && (
+					<View style={[styles.features, { borderColor: palette.border }]}>
+						{landingConfig.features.map((f) => (
+							<View key={f.text} style={styles.featureItem}>
+								<Ionicons name={f.icon as any} size={18} color={palette.textMuted} style={{ marginRight: 8 }} />
+								<Text style={[styles.featureText, { color: palette.textMuted }]}>{f.text}</Text>
+							</View>
+						))}
+					</View>
+				)}
+				{landingConfig.disclaimer ? (
+					<Text style={[styles.disclaimer, { color: palette.textMuted }]}>
+						{landingConfig.disclaimer}
+					</Text>
+				) : null}
 			</View>
 
 			<Modal
@@ -55,25 +149,23 @@ export default function HomeScreen({ navigation }: Props) {
 				onRequestClose={() => setSettingsVisible(false)}
 			>
 				<Pressable style={styles.modalBackdrop} onPress={() => setSettingsVisible(false)}>
-					<Pressable style={[styles.modalContent, dynamicStyles.modalContent]} onPress={(e) => e.stopPropagation()}>
+					<Pressable style={[styles.modalContent, { backgroundColor: palette.surface }]} onPress={(e) => e.stopPropagation()}>
 						<View style={styles.modalHeader}>
-							<Text style={[styles.modalTitle, dynamicStyles.modalTitle]}>Settings</Text>
+							<Text style={[styles.modalTitle, { color: palette.text }]}>Settings</Text>
 							<TouchableOpacity onPress={() => setSettingsVisible(false)}>
-								<Text style={[styles.closeButton, dynamicStyles.closeButton]}>✕</Text>
+								<Ionicons name="close" size={22} color={palette.text} />
 							</TouchableOpacity>
 						</View>
 						
 						<View style={styles.settingRow}>
 							<View style={styles.settingInfo}>
-								<Text style={[styles.settingLabel, dynamicStyles.settingLabel]}>Dark Mode</Text>
-								<Text style={[styles.settingDescription, dynamicStyles.settingDescription]}>
-									Toggle between light and dark theme
-								</Text>
+								<Text style={[styles.settingLabel, { color: palette.text }]}>Dark Mode</Text>
+								<Text style={[styles.settingDescription, { color: palette.textMuted }]}>Toggle between light and dark theme</Text>
 							</View>
 							<Switch
 								value={isDark}
 								onValueChange={toggleTheme}
-								trackColor={{ false: '#767577', true: '#4c6fff' }}
+								trackColor={{ false: '#767577', true: palette.primary }}
 								thumbColor={isDark ? '#ffffff' : '#f4f3f4'}
 							/>
 						</View>
@@ -84,49 +176,28 @@ export default function HomeScreen({ navigation }: Props) {
   );
 }
 
-function getDynamicStyles(isDark: boolean) {
-	return {
-		safe: {
-			backgroundColor: isDark ? '#0b0b0b' : '#ffffff',
-		},
-		brand: {
-			color: isDark ? '#ffffff' : '#0b0b0b',
-		},
-		tagline: {
-			color: isDark ? '#d1d1d1' : '#666666',
-		},
-		settingsIcon: {
-			color: isDark ? '#ffffff' : '#0b0b0b',
-		},
-		modalContent: {
-			backgroundColor: isDark ? '#1a1a1a' : '#ffffff',
-		},
-		modalTitle: {
-			color: isDark ? '#ffffff' : '#0b0b0b',
-		},
-		closeButton: {
-			color: isDark ? '#ffffff' : '#0b0b0b',
-		},
-		settingLabel: {
-			color: isDark ? '#ffffff' : '#0b0b0b',
-		},
-		settingDescription: {
-			color: isDark ? '#d1d1d1' : '#666666',
-		},
-	};
-}
-
 const styles = StyleSheet.create({
 	safe: {
 		flex: 1,
+	},
+	decor: {
+		...StyleSheet.absoluteFillObject,
+		pointerEvents: 'none',
+	},
+	glow: {
+		position: 'absolute',
+		width: 260,
+		height: 260,
+		borderRadius: 130,
+		filter: Platform.select({ web: 'blur(60px)' as any, default: undefined }),
 	},
 	container: {
 		flex: 1,
 		justifyContent: 'flex-start',
 		alignItems: 'center',
 		paddingHorizontal: 20,
-		paddingTop: 72,
-		gap: 20,
+		paddingTop: 64,
+		gap: 18,
 	},
 	header: {
 		flexDirection: 'row',
@@ -135,11 +206,23 @@ const styles = StyleSheet.create({
 		width: '100%',
 		position: 'relative',
 	},
+	brandRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
+	},
+	logoBadge: {
+		width: 36,
+		height: 36,
+		borderRadius: 10,
+		alignItems: 'center',
+		justifyContent: 'center',
+		marginRight: 10,
+		borderWidth: 1,
+	},
 	brand: {
-		fontSize: 40,
 		fontWeight: '800',
 		letterSpacing: 0.3,
-		marginBottom: 8,
+		marginBottom: 2,
 		justifyContent: 'center',
 		fontFamily: Platform.select({
 			ios: 'Avenir-Heavy',
@@ -150,53 +233,77 @@ const styles = StyleSheet.create({
 	settingsButton: {
 		position: 'absolute',
 		right: 0,
-		top: 0,
+		top: 2,
 		padding: 8,
 	},
-	settingsIcon: {
-		fontSize: 24,
-	},
 	tagline: {
-		fontSize: 16,
 		textAlign: 'center',
 		lineHeight: 22,
-		maxWidth: 300,
+		maxWidth: 360,
 	},
-	taglineAccent: {
-		color: '#e1306c',
-		fontWeight: '700',
+	buttons: {
+		marginTop: 6,
+		width: '100%',
+		alignItems: 'center',
+		gap: 12,
 	},
 	ctaButton: {
-		marginTop: 10,
-		backgroundColor: '#4c6fff',
-		borderRadius: 12,
-		paddingHorizontal: 28,
-		height: 48,
+		borderRadius: themeConfig.shape.radiusMd,
+		paddingHorizontal: 24,
+		height: 50,
 		alignItems: 'center',
 		justifyContent: 'center',
-		width: 260,
+		flexDirection: 'row',
+		borderWidth: 1,
 		shadowColor: '#000',
 		shadowOpacity: 0.25,
-		shadowRadius: 6,
+		shadowRadius: 8,
 		shadowOffset: { width: 0, height: 4 },
 		elevation: 2,
 	},
 	ctaLabel: {
-		color: '#ffffff',
-		fontSize: 16,
 		fontWeight: '700',
 	},
-	secondaryRow: {
+	features: {
+		marginTop: 18,
+		paddingVertical: 14,
+		paddingHorizontal: 16,
+		borderRadius: themeConfig.shape.radiusLg,
+		borderWidth: 1,
+		width: '100%',
+		maxWidth: 460,
+		gap: 10,
+	},
+	featureItem: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		marginTop: 12,
 	},
-	secondaryLink: {
-		color: '#9ab0ff',
-		fontWeight: '600',
+	featureText: {
+		fontSize: themeConfig.typography.body,
 	},
-	secondaryDivider: {
-		color: '#6b7280',
+	info: {
+		marginTop: 10,
+		paddingVertical: 12,
+		paddingHorizontal: 14,
+		borderRadius: themeConfig.shape.radiusLg,
+		borderWidth: 1,
+		width: '100%',
+		maxWidth: 460,
+		gap: 8,
+	},
+	infoItem: {
+		flexDirection: 'row',
+		alignItems: 'center',
+	},
+	infoText: {
+		fontSize: themeConfig.typography.body,
+	},
+	disclaimer: {
+		marginTop: 10,
+		textAlign: 'center',
+		maxWidth: 520,
+		fontSize: 12,
+		opacity: 0.85,
 	},
 	modalBackdrop: {
 		flex: 1,
@@ -217,18 +324,13 @@ const styles = StyleSheet.create({
 		marginBottom: 24,
 	},
 	modalTitle: {
-		fontSize: 24,
+		fontSize: 22,
 		fontWeight: '700',
 		fontFamily: Platform.select({
 			ios: 'Avenir-Heavy',
 			android: 'sans-serif-medium',
 			default: 'System',
 		}),
-	},
-	closeButton: {
-		fontSize: 24,
-		fontWeight: '300',
-		padding: 4,
 	},
 	settingRow: {
 		flexDirection: 'row',
@@ -250,5 +352,4 @@ const styles = StyleSheet.create({
 		lineHeight: 20,
 	},
 });
-
 

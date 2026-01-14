@@ -9,8 +9,15 @@ export interface SocialWebViewProps {
   injectionBefore?: string;
   injectionAfter?: string;
   onNavigationStateChange?: (nav: WebViewNavigation) => void;
-  webviewRef?: React.RefObject<WebView>;
+  webviewRef?: React.RefObject<WebView | null>;
   theme?: 'light' | 'dark';
+  enableConsoleBridge?: boolean;
+  onConsoleEvent?: (entry: {
+    level: 'log' | 'info' | 'warn' | 'error' | 'debug';
+    args: unknown[];
+    ts: number;
+    location?: string;
+  }) => void;
 }
 
 function isHostAllowed(url: string, allowedHosts: string[]): boolean {
@@ -35,6 +42,62 @@ export default function SocialWebView(props: SocialWebViewProps) {
   } = props;
 
   const source = useMemo(() => ({ uri: startUrl }), [startUrl]);
+
+  // Optional console bridge to surface browser console logs out to RN
+  const consoleBridgeBefore = useMemo(() => {
+    return `
+      (function () {
+        if (!window.ReactNativeWebView) { return; }
+        try {
+          var levels = ['log','info','warn','error','debug'];
+          function safeClone(value) {
+            try {
+              if (value === undefined) return 'undefined';
+              if (value === null) return null;
+              if (typeof value === 'string') return value;
+              if (typeof value === 'number' || typeof value === 'boolean') return value;
+              if (value instanceof Error) return { name: value.name, message: value.message, stack: String(value.stack || '') };
+              return JSON.parse(JSON.stringify(value));
+            } catch (e) {
+              try { return String(value); } catch (_) { return '[unserializable]'; }
+            }
+          }
+          levels.forEach(function (level) {
+            try {
+              var original = console[level] && console[level].bind(console);
+              console[level] = function () {
+                try {
+                  var payload = {
+                    __unplugged: 'console',
+                    level: level,
+                    args: Array.prototype.slice.call(arguments).map(safeClone),
+                    ts: Date.now(),
+                    location: String(location && location.href || '')
+                  };
+                  window.ReactNativeWebView.postMessage(JSON.stringify(payload));
+                } catch (e) {}
+                if (original) { original.apply(console, arguments); }
+              }
+            } catch (e) {}
+          });
+          window.addEventListener('error', function (event) {
+            try {
+              var errMsg = (event && event.message) ? event.message : 'Unknown error';
+              var payload = { __unplugged: 'console', level: 'error', args: [errMsg], ts: Date.now(), location: String(location && location.href || '') };
+              window.ReactNativeWebView.postMessage(JSON.stringify(payload));
+            } catch (e) {}
+          });
+          window.addEventListener('unhandledrejection', function (event) {
+            try {
+              var reason = event && event.reason ? event.reason : 'Unknown reason';
+              var payload = { __unplugged: 'console', level: 'error', args: ['Unhandled promise rejection', safeClone(reason)], ts: Date.now(), location: String(location && location.href || '') };
+              window.ReactNativeWebView.postMessage(JSON.stringify(payload));
+            } catch (e) {}
+          });
+        } catch (e) {}
+      })();
+    `;
+  }, []);
 
   // Inject theme preference into browser - override browser's prefers-color-scheme
   const themeInjectionBefore = useMemo(() => {
@@ -265,9 +328,10 @@ export default function SocialWebView(props: SocialWebViewProps) {
   // Combine theme injection with existing injections
   const combinedInjectionBefore = useMemo(() => {
     const parts = [themeInjectionBefore];
+    if (props.enableConsoleBridge) parts.push(consoleBridgeBefore);
     if (injectionBefore) parts.push(injectionBefore);
     return parts.join('\n');
-  }, [themeInjectionBefore, injectionBefore]);
+  }, [themeInjectionBefore, consoleBridgeBefore, props.enableConsoleBridge, injectionBefore]);
 
   const combinedInjectionAfter = useMemo(() => {
     const parts = [themeInjectionAfter];
@@ -293,9 +357,22 @@ export default function SocialWebView(props: SocialWebViewProps) {
       onNavigationStateChange={onNavigationStateChange}
       onMessage={(event) => {
         try {
-          // Surface messages from injected scripts for debugging
-          // eslint-disable-next-line no-console
-          console.log('[WebView message]', event.nativeEvent.data);
+          const data = event.nativeEvent?.data;
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed && parsed.__unplugged === 'console' && props.onConsoleEvent) {
+              props.onConsoleEvent({
+                level: parsed.level,
+                args: parsed.args,
+                ts: parsed.ts,
+                location: parsed.location,
+              });
+              return;
+            }
+          } catch {
+            // fall through to plain log
+          }
+          console.log('[WebView message]', data);
         } catch {}
       }}
       allowsBackForwardNavigationGestures={Platform.OS === 'ios'}
