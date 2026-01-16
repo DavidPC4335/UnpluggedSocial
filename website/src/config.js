@@ -10,7 +10,7 @@ export const NAV_LINKS = [
 
 export const DONATION = {
   paypalUrl:
-    "https://www.paypal.com/qrcodes/managed/44e08648-2e66-4158-8f0d-7b00e882ccab?utm_source=consweb_more",
+    "https://www.paypal.com/paypalme/gattamakethatmoney",
   eyebrow: "Support the build",
   title: "Buy me a coffee",
   summary:
