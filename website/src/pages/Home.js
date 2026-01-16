@@ -1,46 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import logo from "../assets/plug.svg";
-
-const landingConfig = {
-  title: "Unplugged Socials",
-  subtitlePrefix: "Keep your ",
-  subtitleAccent: "social media",
-  subtitleSuffix: " about being social.",
-  ctas: [
-    {
-      label: "Open Instagram",
-      href: "https://www.instagram.com/",
-      primary: true,
-    },
-    {
-      label: "Buy me a coffee",
-      href: "/coffee",
-      primary: false,
-    },
-  ],
-  features: [
-    {
-      title: "Stay connected",
-      text: "Stay connected with friends and accounts you follow.",
-    },
-    {
-      title: "Protect your time",
-      text: "Be present and protect your time from endless scrolling.",
-    },
-    {
-      title: "Cleaner feeds",
-      text: "No extra ads, or retention hacking content.",
-    },
-  ],
-  info: [
-    {
-      text: "Shake your phone to bring up the unplugged menu.",
-    },
-  ],
-  disclaimer:
-    "This app is not affiliated with Instagram, Facebook, or TikTok. It is a third-party app blocker that allows you to browse these platforms.",
-};
+import logo from "../assets/icon.png";
+import { HOME } from "../config";
 
 function Home() {
   return (
@@ -48,14 +9,14 @@ function Home() {
       <section className="hero">
         <div className="hero__content">
           <div className="hero__badge">unpluggedsocials.com</div>
-          <h1>{landingConfig.title}</h1>
+          <h1>{HOME.title}</h1>
           <p className="hero__subtitle">
-            {landingConfig.subtitlePrefix}
-            <span className="hero__accent">{landingConfig.subtitleAccent}</span>
-            {landingConfig.subtitleSuffix}
+            {HOME.subtitlePrefix}
+            <span className="hero__accent">{HOME.subtitleAccent}</span>
+            {HOME.subtitleSuffix}
           </p>
           <div className="hero__cta">
-            {landingConfig.ctas.map((cta) => {
+            {HOME.ctas.map((cta) => {
               const className = `button${cta.primary ? " button--primary" : ""}`;
               if (cta.href.startsWith("/")) {
                 return (
@@ -93,7 +54,7 @@ function Home() {
           </p>
         </div>
         <div className="grid">
-          {landingConfig.features.map((feature) => (
+          {HOME.features.map((feature) => (
             <div className="card" key={feature.title}>
               <h3>{feature.title}</h3>
               <p>{feature.text}</p>
@@ -108,7 +69,7 @@ function Home() {
           <h2>Designed for mindful browsing.</h2>
         </div>
         <div className="grid grid--single">
-          {landingConfig.info.map((item) => (
+          {HOME.info.map((item) => (
             <div className="card card--highlight" key={item.text}>
               <p>{item.text}</p>
             </div>
@@ -142,7 +103,7 @@ function Home() {
       </section>
 
       <section className="section section--disclaimer">
-        <p>{landingConfig.disclaimer}</p>
+        <p>{HOME.disclaimer}</p>
       </section>
     </div>
   );

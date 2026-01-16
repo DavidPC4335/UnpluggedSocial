@@ -2,12 +2,10 @@ import React from "react";
 import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
 import Home from "./pages/Home";
 import Coffee from "./pages/Coffee";
-import logo from "./assets/plug.svg";
-
-const navLinks = [
-  { to: "/", label: "Home" },
-  { to: "/coffee", label: "Buy me a coffee" },
-];
+import Privacy from "./pages/Privacy";
+import logo from "./assets/icon.png";
+import { NAV_LINKS, SITE } from "./config";
+import Footer from "./components/Footer";
 
 function App() {
   return (
@@ -16,10 +14,10 @@ function App() {
         <header className="nav">
           <div className="nav__brand">
             <img className="nav__logo" src={logo} alt="Unplugged Socials logo" />
-            <span>Unplugged Socials</span>
+            <span>{SITE.name}</span>
           </div>
           <nav className="nav__links">
-            {navLinks.map((link) => (
+            {NAV_LINKS.map((link) => (
               <NavLink
                 key={link.to}
                 className={({ isActive }) =>
@@ -37,13 +35,11 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/coffee" element={<Coffee />} />
+            <Route path="/privacy" element={<Privacy />} />
           </Routes>
         </main>
 
-        <footer className="footer">
-          <p>Unplugged Socials</p>
-          <p>Keep your social media about being social.</p>
-        </footer>
+        <Footer />
       </div>
     </BrowserRouter>
   );
