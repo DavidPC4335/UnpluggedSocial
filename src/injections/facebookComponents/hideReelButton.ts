@@ -105,27 +105,32 @@ export function install() {
                         //get parent of parent
                         const parentOfParent = parent.parentElement;
                         if (parentOfParent && !parentOfParent.getAttribute('data-unplugged-reel-replaced')) {
-                           parentOfParent.setAttribute('data-unplugged-reel-replaced', '1');
+                           // Check if there are images to remove
+                           const images = parentOfParent.querySelectorAll('img');
                            
-                           // Clear existing content
-                           while (parentOfParent.firstChild) {
-                               parentOfParent.removeChild(parentOfParent.firstChild);
+                           if (images.length > 0) {
+                               parentOfParent.setAttribute('data-unplugged-reel-replaced', '1');
+                               
+                               // Clear existing content
+                               while (parentOfParent.firstChild) {
+                                   parentOfParent.removeChild(parentOfParent.firstChild);
+                               }
+                               
+                               // Create message element
+                               const messageDiv = document.createElement('div');
+                               messageDiv.className = 'unplugged-reel-message';
+                               messageDiv.setAttribute('data-unplugged', '1');
+                               
+                               try {
+                                   const list: string[] = (MESSAGES as any) || [];
+                                   const msg = list && list.length ? list[Math.floor(Math.random() * list.length)] : 'Reels disabled.';
+                                   messageDiv.textContent = msg;
+                               } catch {
+                                   messageDiv.textContent = 'Reels disabled.';
+                               }
+                               
+                               parentOfParent.appendChild(messageDiv);
                            }
-                           
-                           // Create message element
-                           const messageDiv = document.createElement('div');
-                           messageDiv.className = 'unplugged-reel-message';
-                           messageDiv.setAttribute('data-unplugged', '1');
-                           
-                           try {
-                               const list: string[] = (MESSAGES as any) || [];
-                               const msg = list && list.length ? list[Math.floor(Math.random() * list.length)] : 'Reels disabled.';
-                               messageDiv.textContent = msg;
-                           } catch {
-                               messageDiv.textContent = 'Reels disabled.';
-                           }
-                           
-                           parentOfParent.appendChild(messageDiv);
                         }
 					}
 					

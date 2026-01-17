@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
 import Home from "./pages/Home";
 import Coffee from "./pages/Coffee";
 import Privacy from "./pages/Privacy";
+import Support from "./pages/Support";
 import logo from "./assets/icon.png";
 import { NAV_LINKS, SITE } from "./config";
 import Footer from "./components/Footer";
@@ -36,6 +37,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/coffee" element={<Coffee />} />
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/support" element={<Support />} />
           </Routes>
         </main>
 

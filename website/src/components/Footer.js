@@ -10,7 +10,7 @@ function Footer() {
         </a>
       </p>
       <p>
-        <a href="/privacy">Privacy policy</a>
+        <a href="/privacy">Privacy policy</a> · <a href="/support">Support</a>
       </p>
     </footer>
   );
