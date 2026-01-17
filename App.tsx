@@ -3,13 +3,16 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from './app/index';
 import BrowserScreen from './app/browser';
 import { ThemeProvider } from './src/contexts/ThemeContext';
+import { SettingsProvider } from './src/contexts/SettingsContext';
 
 export default function App() {
   return (
     <ThemeProvider>
-      <NavigationContainer>
-        <RootNavigator />
-      </NavigationContainer>
+      <SettingsProvider>
+        <NavigationContainer>
+          <RootNavigator />
+        </NavigationContainer>
+      </SettingsProvider>
     </ThemeProvider>
   );
 }

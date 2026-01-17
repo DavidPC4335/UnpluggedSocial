@@ -5,6 +5,8 @@ export interface LandingCTA {
 	icon: 'logo-instagram' | 'logo-facebook' | 'logo-tiktok';
 	site: SiteKey;
 	primary?: boolean;
+	color?: string;
+	gradientColors?: string[]; // Array of colors for LinearGradient
 }
 
 export interface LandingConfig {
@@ -25,10 +27,9 @@ export const landingConfig: LandingConfig = {
 	subtitleAccent: 'social media',
 	subtitleSuffix: ' about being social.',
 	ctas: [
-		{ label: 'Open Instagram', icon: 'logo-instagram', site: 'instagram', primary: true },
-		// You can enable these when ready:
-		// { label: 'Open Facebook', icon: 'logo-facebook', site: 'facebook' },
-		// { label: 'Open TikTok', icon: 'logo-tiktok', site: 'tiktok' },
+		{ label: 'Open Instagram', icon: 'logo-instagram', site: 'instagram', gradientColors: ['#f1993b', '#bb2da4']},
+		{ label: 'Open Facebook', icon: 'logo-facebook', site: 'facebook' ,gradientColors: ['#0072e5', '#19b3fa']},
+		{ label: 'Open TikTok', icon: 'logo-tiktok', site: 'tiktok', gradientColors: [ '#ff0050', '#00f2ea']},
 	],
 	showFeatureList: true,
 	features: [

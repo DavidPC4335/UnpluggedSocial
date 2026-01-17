@@ -1,11 +1,14 @@
 import React, { useMemo, useState } from 'react';
-import { SafeAreaView, View, StyleSheet, Text, TouchableOpacity, Platform, Modal, Pressable, Switch, useWindowDimensions } from 'react-native';
+import { SafeAreaView, View, StyleSheet, Text, TouchableOpacity, Platform, Modal, Pressable, Switch, useWindowDimensions, ScrollView } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { SiteKey } from '../src/config/sites';
 import { useTheme } from '../src/contexts/ThemeContext';
+import { useSettings } from '../src/contexts/SettingsContext';
 import { landingConfig } from '../src/config/landing';
 import { getPalette, themeConfig } from '../src/config/theme';
+import { platformSettings } from '../src/config/settings';
 import { Ionicons, Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 type RootStackParamList = {
   Home: undefined;
@@ -17,6 +20,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 export default function HomeScreen({ navigation }: Props) {
 	const { height, width } = useWindowDimensions();
 	const { theme, toggleTheme } = useTheme();
+	const { settings, updatePlatformVisibility } = useSettings();
 	const [settingsVisible, setSettingsVisible] = useState(false);
 	const open = (site: SiteKey) => navigation.navigate('Browser', { site });
 
@@ -77,41 +81,59 @@ export default function HomeScreen({ navigation }: Props) {
 					{landingConfig.subtitleSuffix}
 				</Text>
 
-				<View style={styles.buttons}>
-					{landingConfig.ctas.map((cta) => (
-						<TouchableOpacity
-							key={cta.label}
-							style={[
-								styles.ctaButton,
-								{
-									backgroundColor: cta.primary ? palette.primary : (isDark ? '#1c1c1c' : '#f5f5f5'),
-									borderColor: cta.primary ? palette.primary : palette.border,
-									width: Math.min(320, Math.max(240, width * 0.7)),
-								},
-							]}
-							activeOpacity={0.93}
-							onPress={() => open(cta.site)}
-						>
-							<Ionicons
-								name={cta.icon as any}
-								size={18}
-								color={cta.primary ? palette.primaryTextOn : (isDark ? '#ffffff' : '#111111')}
-								style={{ marginRight: 10 }}
-							/>
-							<Text
+			<View style={styles.buttons}>
+				{landingConfig.ctas
+					.filter((cta) => settings.platformVisibility[cta.site])
+					.map((cta) => {
+						const hasGradient = cta.gradientColors && cta.gradientColors.length >= 2;
+						const textColor = hasGradient ? '#ffffff' : cta.primary ? palette.primaryTextOn : (isDark ? '#ffffff' : '#111111');
+						const bgColor = hasGradient ? 'transparent' : cta.color ? cta.color : cta.primary ? palette.primary : (isDark ? '#1c1c1c' : '#f5f5f5');
+						const borderColor = hasGradient ? 'transparent' : cta.color ? cta.color : cta.primary ? palette.primary : palette.border;
+
+						return (
+							<TouchableOpacity
+								key={cta.label}
 								style={[
-									styles.ctaLabel,
+									styles.ctaButton,
 									{
-										color: cta.primary ? palette.primaryTextOn : (isDark ? '#ffffff' : '#111111'),
-										fontSize: themeConfig.typography.button * baseScale,
+										backgroundColor: bgColor,
+										borderColor: borderColor,
+										width: Math.min(320, Math.max(240, width * 0.7)),
+										overflow: 'hidden',
 									},
 								]}
+								activeOpacity={0.93}
+								onPress={() => open(cta.site)}
 							>
-								{cta.label}
-							</Text>
-						</TouchableOpacity>
-					))}
-				</View>
+								{hasGradient && (
+									<LinearGradient
+										colors={cta.gradientColors! as [string, string, ...string[]]}
+										start={{ x: 0, y: 0 }}
+										end={{ x: 1, y: 0 }}
+										style={StyleSheet.absoluteFillObject}
+									/>
+								)}
+								<Ionicons
+									name={cta.icon as any}
+									size={18}
+									color={textColor}
+									style={{ marginRight: 10 }}
+								/>
+								<Text
+									style={[
+										styles.ctaLabel,
+										{
+											color: textColor,
+											fontSize: themeConfig.typography.button * baseScale,
+										},
+									]}
+								>
+									{cta.label}
+								</Text>
+							</TouchableOpacity>
+						);
+					})}
+			</View>
 
 			
 
@@ -157,18 +179,60 @@ export default function HomeScreen({ navigation }: Props) {
 							</TouchableOpacity>
 						</View>
 						
-						<View style={styles.settingRow}>
-							<View style={styles.settingInfo}>
-								<Text style={[styles.settingLabel, { color: palette.text }]}>Dark Mode</Text>
-								<Text style={[styles.settingDescription, { color: palette.textMuted }]}>Toggle between light and dark theme</Text>
+						<ScrollView style={styles.settingsScroll} showsVerticalScrollIndicator={false}>
+							<View style={styles.settingSection}>
+								<Text style={[styles.sectionTitle, { color: palette.text }]}>Appearance</Text>
+								
+								<View style={styles.settingRow}>
+									<View style={styles.settingInfo}>
+										<Text style={[styles.settingLabel, { color: palette.text }]}>Dark Mode</Text>
+										<Text style={[styles.settingDescription, { color: palette.textMuted }]}>Toggle between light and dark theme</Text>
+									</View>
+									<Switch
+										value={isDark}
+										onValueChange={toggleTheme}
+										trackColor={{ false: '#767577', true: palette.primary }}
+										thumbColor={isDark ? '#ffffff' : '#f4f3f4'}
+									/>
+								</View>
 							</View>
-							<Switch
-								value={isDark}
-								onValueChange={toggleTheme}
-								trackColor={{ false: '#767577', true: palette.primary }}
-								thumbColor={isDark ? '#ffffff' : '#f4f3f4'}
-							/>
-						</View>
+
+							<View style={[styles.settingSection, { borderTopWidth: 1, borderTopColor: palette.border }]}>
+								<Text style={[styles.sectionTitle, { color: palette.text }]}>Visible Platforms</Text>
+								<Text style={[styles.sectionDescription, { color: palette.textMuted }]}>
+									Choose which social media platforms appear on your homepage
+								</Text>
+								
+								{platformSettings.map((platform) => (
+									<View key={platform.key} style={styles.settingRow}>
+										<View style={styles.settingInfo}>
+											<View style={styles.platformLabelRow}>
+												<Ionicons 
+													name={platform.icon} 
+													size={20} 
+													color={palette.text} 
+													style={{ marginRight: 10 }}
+												/>
+												<Text style={[styles.settingLabel, { color: palette.text }]}>
+													{platform.label}
+												</Text>
+											</View>
+											{platform.description && (
+												<Text style={[styles.settingDescription, { color: palette.textMuted }]}>
+													{platform.description}
+												</Text>
+											)}
+										</View>
+										<Switch
+											value={settings.platformVisibility[platform.key]}
+											onValueChange={(value) => updatePlatformVisibility(platform.key, value)}
+											trackColor={{ false: '#767577', true: palette.primary }}
+											thumbColor={settings.platformVisibility[platform.key] ? '#ffffff' : '#f4f3f4'}
+										/>
+									</View>
+								))}
+							</View>
+						</ScrollView>
 					</Pressable>
 				</Pressable>
 			</Modal>
@@ -350,6 +414,31 @@ const styles = StyleSheet.create({
 	settingDescription: {
 		fontSize: 14,
 		lineHeight: 20,
+	},
+	settingsScroll: {
+		maxHeight: 500,
+	},
+	settingSection: {
+		paddingVertical: 12,
+	},
+	sectionTitle: {
+		fontSize: 14,
+		fontWeight: '700',
+		textTransform: 'uppercase',
+		letterSpacing: 0.5,
+		marginBottom: 8,
+		opacity: 0.8,
+	},
+	sectionDescription: {
+		fontSize: 13,
+		lineHeight: 18,
+		marginBottom: 12,
+		opacity: 0.8,
+	},
+	platformLabelRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		marginBottom: 4,
 	},
 });
 

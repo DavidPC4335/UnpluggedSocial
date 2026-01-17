@@ -1,26 +1,28 @@
 export const id = 'hideHomePageContent';
 
 export const styles = `
-#unplugged-home-replacement{
+#unplugged-fb-replacement{
 	width:100%;
-	min-height:60vh;
-	background:#0b0b0b;
-	color:#ffffff;
+	min-height:50vh;
+	background:#18191a;
+	color:#e4e6eb;
 	display:flex;
 	align-items:center;
 	justify-content:center;
 	text-align:center;
-	font-size:28px;
-	font-weight:800;
+	font-size:24px;
+	font-weight:700;
 	font-family:-apple-system,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
 	box-sizing:border-box;
 	padding:24px;
-    border:1px solid #ffffff;
+	border:1px solid #3e4042;
+	border-radius:8px;
+	margin:8px;
 }
 `;
 
 // Keywords used to identify content to replace
-const FILTER_KEYWORDS = ['follow', 'sponsored','ad'];
+const FILTER_KEYWORDS = ['sponsored', 'follow','join'];
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - Resolved by esbuild loader as JSON at build time
@@ -28,35 +30,29 @@ import MESSAGES from '../../documents/inspirationalMessages.json';
 
 export function install() {
 	function dbg(msg: string) {
-		try { (window as any).ReactNativeWebView?.postMessage?.('[IG] hideHomePageContent: ' + msg); } catch {}
+		try { (window as any).ReactNativeWebView?.postMessage?.('[FB] hideHomePageContent: ' + msg); } catch {}
 	}
 
-	function isHomePath(): boolean {
-		try {
-			const path = (location.pathname || '').replace(/\/+$/, '');
-			// Home is '' or '/' (normalize)
-			return path === '';
-		} catch {
-			return false;
-		}
-	}
-
-	function shouldReplaceArticle(article: HTMLElement): boolean {
+	function shouldReplacePost(post: HTMLElement): boolean {
 		try {
 			// Avoid reprocessing our own replacements
-			if (article.id === 'unplugged-home-replacement' || article.getAttribute('data-unplugged') === '1') return false;
-			const text = (article.textContent || '').toLowerCase();
+			if (post.id === 'unplugged-fb-replacement' || post.getAttribute('data-unplugged') === '1') return false;
+			
+			const text = (post.textContent || '').toLowerCase();
 			return FILTER_KEYWORDS.some(keyword => text.includes(keyword));
 		} catch {
 			return false;
 		}
 	}
 
-	function replaceArticle(article: HTMLElement) {
+	function replacePost(post: HTMLElement) {
 		try {
-			const replacement = document.createElement('article');
-			replacement.id = 'unplugged-home-replacement';
+			const replacement = document.createElement('div');
+			replacement.id = 'unplugged-fb-replacement';
 			replacement.setAttribute('data-unplugged', '1');
+			replacement.setAttribute('data-mcomponent', 'MContainer');
+			replacement.setAttribute('data-type', 'container');
+			
 			try {
 				const list: string[] = (MESSAGES as any) || [];
 				const msg = list && list.length ? list[Math.floor(Math.random() * list.length)] : 'Go outside.';
@@ -64,23 +60,36 @@ export function install() {
 			} catch {
 				replacement.textContent = 'Go outside.';
 			}
-			article.replaceWith(replacement);
+			
+			post.replaceWith(replacement);
 		} catch {}
 	}
 
 	function scan(): boolean {
-		if (!isHomePath()) return false;
 		let acted = false;
 		try {
-			const articles = document.querySelectorAll('article') as NodeListOf<HTMLElement>;
-			articles.forEach((a) => {
-				if (shouldReplaceArticle(a)) {
-					replaceArticle(a);
+			// Target the main post containers (feed posts with data-dcm-id)
+			const feedPosts = document.querySelectorAll('div[data-mcomponent="MContainer"][data-dcm-id]') as NodeListOf<HTMLElement>;
+			
+			feedPosts.forEach((post) => {
+				if (shouldReplacePost(post)) {
+					replacePost(post);
+					acted = true;
+				}
+			});
+			
+			// Also target marketplace posts (with data-tracking-duration-id)
+			const marketplacePosts = document.querySelectorAll('div[data-mcomponent="MContainer"][data-tracking-duration-id]') as NodeListOf<HTMLElement>;
+			
+			marketplacePosts.forEach((post) => {
+				if (shouldReplacePost(post)) {
+					replacePost(post);
 					acted = true;
 				}
 			});
 		} catch {}
-		if (acted) dbg('replaced some recommended/sponsored articles');
+		
+		if (acted) dbg('replaced some sponsored/follow/marketplace posts');
 		return acted;
 	}
 
@@ -116,6 +125,3 @@ export function install() {
 		});
 	} catch {}
 }
-
-
-

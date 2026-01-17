@@ -3,16 +3,19 @@ const { build } = require('esbuild');
 const { readdirSync, writeFileSync, mkdirSync, existsSync } = require('fs');
 const { join, resolve } = require('path');
 
-const COMPONENTS_DIR = resolve('src', 'injections', 'instagramComponents');
+const SHARED_COMPONENTS_DIR = resolve('src', 'injections', 'sharedComponents');
+const INSTAGRAM_COMPONENTS_DIR = resolve('src', 'injections', 'instagramComponents');
+const FACEBOOK_COMPONENTS_DIR = resolve('src', 'injections', 'facebookComponents');
 const GENERATED_DIR = resolve('src', 'injections', 'generated');
-const OUTPUT_FILE = join(GENERATED_DIR, 'instagram.ts');
+const INSTAGRAM_OUTPUT_FILE = join(GENERATED_DIR, 'instagram.ts');
+const FACEBOOK_OUTPUT_FILE = join(GENERATED_DIR, 'facebook.ts');
 
-function getComponentFiles() {
+function getComponentFiles(componentsDir) {
   try {
-    const all = readdirSync(COMPONENTS_DIR, { withFileTypes: true });
+    const all = readdirSync(componentsDir, { withFileTypes: true });
     return all
       .filter((d) => d.isFile() && (d.name.endsWith('.ts') || d.name.endsWith('.tsx') || d.name.endsWith('.js')))
-      .map((d) => join(COMPONENTS_DIR, d.name));
+      .map((d) => join(componentsDir, d.name));
   } catch {
     return [];
   }
@@ -38,7 +41,7 @@ function makeRuntime() {
 })();`;
 }
 
-async function bundleBefore(entries) {
+async function bundleBefore(entries, platform) {
   const importLines = entries.map((e, i) => `import * as C${i} from ${JSON.stringify(e)};`).join('\n');
   const body = `
 ${makeRuntime()}
@@ -50,7 +53,7 @@ ${makeRuntime()}
 })();`;
 
   const result = await build({
-    stdin: { contents: importLines + '\n' + body, resolveDir: process.cwd(), sourcefile: 'before.entry.ts', loader: 'ts' },
+    stdin: { contents: importLines + '\n' + body, resolveDir: process.cwd(), sourcefile: `before.${platform}.entry.ts`, loader: 'ts' },
     bundle: true,
     minify: true,
     platform: 'browser',
@@ -61,18 +64,19 @@ ${makeRuntime()}
   return result.outputFiles[0].text.trim();
 }
 
-async function bundleAfter(entries) {
+async function bundleAfter(entries, platform) {
+  const platformTag = platform.toUpperCase().substring(0, 2);
   const importLines = entries.map((e, i) => `import * as C${i} from ${JSON.stringify(e)};`).join('\n');
   const body = `
 (function(){
-  try { window.ReactNativeWebView && window.ReactNativeWebView.postMessage && window.ReactNativeWebView.postMessage('[IG] components: after start'); } catch(e){}
+  try { window.ReactNativeWebView && window.ReactNativeWebView.postMessage && window.ReactNativeWebView.postMessage('[${platformTag}] components: after start'); } catch(e){}
   ${entries.map((_, i) => `
   try { if (C${i}.install) { C${i}.install(); } } catch(e) {}
   `.trim()).join('\n')}
 })();`;
 
   const result = await build({
-    stdin: { contents: importLines + '\n' + body, resolveDir: process.cwd(), sourcefile: 'after.entry.ts', loader: 'ts' },
+    stdin: { contents: importLines + '\n' + body, resolveDir: process.cwd(), sourcefile: `after.${platform}.entry.ts`, loader: 'ts' },
     bundle: true,
     minify: true,
     platform: 'browser',
@@ -83,17 +87,22 @@ async function bundleAfter(entries) {
   return result.outputFiles[0].text.trim();
 }
 
-async function main() {
-  const files = getComponentFiles();
-  if (!existsSync(GENERATED_DIR)) mkdirSync(GENERATED_DIR, { recursive: true });
-  const before = await bundleBefore(files);
-  const after = await bundleAfter(files);
+async function buildPlatform(componentsDirs, outputFile, platform, exportPrefix) {
+  const files = componentsDirs.flatMap((dir) => getComponentFiles(dir));
+  const before = await bundleBefore(files, platform);
+  const after = await bundleAfter(files, platform);
   const out = `
-export const instagramBefore = ${JSON.stringify(before + ';true;')};
-export const instagramAfter = ${JSON.stringify(after + ';true;')};
+export const ${exportPrefix}Before = ${JSON.stringify(before + ';true;')};
+export const ${exportPrefix}After = ${JSON.stringify(after + ';true;')};
 `.trim() + '\n';
-  writeFileSync(OUTPUT_FILE, out, 'utf8');
-  console.log('Generated', OUTPUT_FILE);
+  writeFileSync(outputFile, out, 'utf8');
+  console.log('Generated', outputFile);
+}
+
+async function main() {
+  if (!existsSync(GENERATED_DIR)) mkdirSync(GENERATED_DIR, { recursive: true });
+  await buildPlatform([SHARED_COMPONENTS_DIR, INSTAGRAM_COMPONENTS_DIR], INSTAGRAM_OUTPUT_FILE, 'instagram', 'instagram');
+  await buildPlatform([SHARED_COMPONENTS_DIR, FACEBOOK_COMPONENTS_DIR], FACEBOOK_OUTPUT_FILE, 'facebook', 'facebook');
 }
 
 main().catch((err) => {
