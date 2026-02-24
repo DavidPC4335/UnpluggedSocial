@@ -1,9 +1,9 @@
 import { Platform } from 'react-native';
 import { instagramBefore, instagramAfter } from '../injections/instagram';
-import { facebookBefore, facebookAfter } from '../injections/facebook';
-import { tiktokBefore, tiktokAfter } from '../injections/tiktok';
+// import { facebookBefore, facebookAfter } from '../injections/facebook';
+// import { tiktokBefore, tiktokAfter } from '../injections/tiktok';
 
-export type SiteKey = 'instagram' | 'facebook' | 'tiktok';
+export type SiteKey = 'instagram'; // | 'facebook' | 'tiktok';
 
 export interface SiteConfig {
   displayName: string;
@@ -30,24 +30,24 @@ export const sites: Record<SiteKey, SiteConfig> = {
     injectionBefore: instagramBefore,
     injectionAfter: instagramAfter,
   },
-  facebook: {
-    displayName: 'Facebook',
-    startUrl: 'https://m.facebook.com/',
-    allowedHosts: ['facebook.com', 'm.facebook.com', 'www.facebook.com', 'lm.facebook.com', 'fbcdn.net', 'fbsbx.com'],
-    userAgentAndroid: ANDROID_MOBILE_UA,
-    userAgentIOS: IOS_MOBILE_UA,
-    injectionBefore: facebookBefore,
-    injectionAfter: facebookAfter,
-  },
-  tiktok: {
-    displayName: 'TikTok',
-    startUrl: 'https://www.tiktok.com/',
-    allowedHosts: ['tiktok.com', 'www.tiktok.com', 'm.tiktok.com', 'tiktokv.com', 'p16-sign.tiktokcdn-us.com', 'tiktokcdn-us.com', 'tiktokcdn.com'],
-    userAgentAndroid: ANDROID_MOBILE_UA,
-    userAgentIOS: IOS_MOBILE_UA,
-    injectionBefore: tiktokBefore,
-    injectionAfter: tiktokAfter,
-  },
+  // facebook: {
+  //   displayName: 'Facebook',
+  //   startUrl: 'https://m.facebook.com/',
+  //   allowedHosts: ['facebook.com', 'm.facebook.com', 'www.facebook.com', 'lm.facebook.com', 'fbcdn.net', 'fbsbx.com'],
+  //   userAgentAndroid: ANDROID_MOBILE_UA,
+  //   userAgentIOS: IOS_MOBILE_UA,
+  //   injectionBefore: facebookBefore,
+  //   injectionAfter: facebookAfter,
+  // },
+  // tiktok: {
+  //   displayName: 'TikTok',
+  //   startUrl: 'https://www.tiktok.com/',
+  //   allowedHosts: ['tiktok.com', 'www.tiktok.com', 'm.tiktok.com', 'tiktokv.com', 'p16-sign.tiktokcdn-us.com', 'tiktokcdn-us.com', 'tiktokcdn.com'],
+  //   userAgentAndroid: ANDROID_MOBILE_UA,
+  //   userAgentIOS: IOS_MOBILE_UA,
+  //   injectionBefore: tiktokBefore,
+  //   injectionAfter: tiktokAfter,
+  // },
 };
 
 export function resolveUserAgentFor(config: SiteConfig): string {

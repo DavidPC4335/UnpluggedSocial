@@ -28,8 +28,8 @@ export const landingConfig: LandingConfig = {
 	subtitleSuffix: ' about being social.',
 	ctas: [
 		{ label: 'Open Instagram', icon: 'logo-instagram', site: 'instagram', gradientColors: ['#f1993b', '#bb2da4']},
-		{ label: 'Open Facebook', icon: 'logo-facebook', site: 'facebook' ,gradientColors: ['#0072e5', '#19b3fa']},
-		{ label: 'Open TikTok', icon: 'logo-tiktok', site: 'tiktok', gradientColors: [ '#ff0050', '#00f2ea']},
+		// { label: 'Open Facebook', icon: 'logo-facebook', site: 'facebook' ,gradientColors: ['#0072e5', '#19b3fa']},
+		// { label: 'Open TikTok', icon: 'logo-tiktok', site: 'tiktok', gradientColors: [ '#ff0050', '#00f2ea']},
 	],
 	showFeatureList: true,
 	features: [

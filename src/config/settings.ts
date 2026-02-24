@@ -10,8 +10,8 @@ import { SiteKey } from './sites';
 
 export interface PlatformVisibility {
 	instagram: boolean;
-	facebook: boolean;
-	tiktok: boolean;
+	// facebook: boolean;
+	// tiktok: boolean;
 }
 
 export interface AppSettings {
@@ -32,8 +32,8 @@ export interface AppSettings {
 export const defaultSettings: AppSettings = {
 	platformVisibility: {
 		instagram: true,
-		facebook: true,
-		tiktok: false, // Disabled by default
+		// facebook: true,
+		// tiktok: false, // Disabled by default
 	},
 };
 
@@ -54,12 +54,12 @@ export const platformSettings: SettingOption[] = [
 		icon: 'logo-instagram',
 		description: 'Show Instagram on homepage',
 	},
-	{
-		key: 'facebook',
-		label: 'Facebook',
-		icon: 'logo-facebook',
-		description: 'Show Facebook on homepage',
-	},
+	// {
+	// 	key: 'facebook',
+	// 	label: 'Facebook',
+	// 	icon: 'logo-facebook',
+	// 	description: 'Show Facebook on homepage',
+	// },
 	// {
 	// 	key: 'tiktok',
 	// 	label: 'TikTok',
